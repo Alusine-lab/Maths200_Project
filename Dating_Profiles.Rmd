@@ -1,0 +1,78 @@
+---
+title: "Maths200_Project"
+author: "Alusine Samura"
+date: "2025-03-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Maths200_Project
+Analyzing personality traits in online dating bios using R. 
+We clean and process text from the OKCupid dataset, extract key traits, and compare them to match percentages. 
+Using tidyverse, tidytext, and ggplot2, we tokenize bios, remove stopwords, and visualize trends.
+
+```{r}
+# Load necessary libraries
+library(tidyverse)
+library(tidytext)
+library(ggplot2)
+library(wordcloud)
+
+# Load dataset
+okcupid_data <- read.csv("C:\\Users\\samur\\OneDrive\\Desktop\\New folder\\R_shiny\\r_shiny\\okcupid_profiles.csv", stringsAsFactors = FALSE)
+
+# View the first few rows
+head(okcupid_data)
+
+# Select relevant columns (use 'essay0' for text and 'age' for demographics)
+okcupid_data <- okcupid_data %>% select(essay0, age)
+
+# Tokenize bios and retain the age column
+data_tokens <- okcupid_data %>% 
+  select(age, essay0) %>%  # Keep 'age' and 'essay0'
+  unnest_tokens(word, essay0) %>%  # Tokenize 'essay0' into words
+  anti_join(stop_words, by = "word")  # Remove stopwords
+
+# Personality traits list
+personality_traits <- c("funny", "kind", "adventurous", "ambitious", "creative", "loyal", "spontaneous")
+
+# Calculate average age per trait
+trait_avg_age <- data_tokens %>% 
+  filter(word %in% personality_traits) %>%  # Keep only words in the traits list
+  group_by(word) %>% 
+  summarise(avg_age = mean(age, na.rm = TRUE))  # Compute average age per word
+
+# Print result
+print(trait_avg_age)
+
+traits_data <- data_tokens %>% 
+  filter(word %in% personality_traits) %>% 
+  count(word)  # Count occurrences of each trait
+
+
+# Visualization: Bar chart of personality traits frequency
+ggplot(traits_data, aes(x = reorder(word, n), y = n)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  theme_minimal() +
+  coord_flip() +
+  labs(title = "Frequency of Personality Traits in Dating Bios",
+       x = "Personality Trait",
+       y = "Count")
+
+# Visualization: Average age by trait (as a proxy for match percentage)
+ggplot(trait_avg_age, aes(x = reorder(word, avg_age), y = avg_age)) +
+  geom_bar(stat = "identity", fill = "darkorange") +
+  theme_minimal() +
+  coord_flip() +
+  labs(title = "Average Age by Personality Trait",
+       x = "Personality Trait",
+       y = "Average Age")
+
+```
+
+
+
+
